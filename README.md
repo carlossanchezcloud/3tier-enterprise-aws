@@ -1,108 +1,150 @@
-# Salón de Belleza — Sistema de Reservas
-## Arquitectura AWS de 3 Capas Segura
+$readme = @'
+# 3tier-enterprise-aws
 
+> Infraestructura AWS de alta disponibilidad para sistema de reservas de salón de belleza.
+> Arquitectura de 3 capas con Terraform, CI/CD con GitHub Actions y acceso seguro vía SSM.
+
+---
+
+## Arquitectura
 ```
-Internet → ALB → EC2 Frontend (React/Vite) [Subred Pública]
-                       ↓ Axios (IP privada)
-              EC2 Backend (Node/Express)     [Subred Privada App]
-                       ↓ Sequelize
-              RDS PostgreSQL                 [Subred Privada Datos]
+                         Internet
+                             │
+                    ┌────────▼────────┐
+                    │   Application   │
+                    │  Load Balancer  │
+                    └────────┬────────┘
+                             │
+              ┌──────────────┴──────────────┐
+              │                             │
+    ┌─────────▼─────────┐       ┌──────────▼──────────┐
+    │   EC2 Backend     │       │   EC2 Backend        │
+    │      AZ1          │       │      AZ2             │
+    │  Node.js + PM2    │       │  Node.js + PM2       │
+    └─────────┬─────────┘       └──────────┬───────────┘
+              └──────────────┬──────────────┘
+                             │
+                    ┌────────▼────────┐
+                    │   RDS MySQL 8.0 │
+                    └─────────────────┘
 ```
 
 ---
 
-## Estructura del proyecto
+## Principios de seguridad
 
+| Capa | Control |
+|------|---------|
+| Red | EC2 y RDS sin IP pública |
+| Acceso EC2 | SSM Session Manager — sin llaves SSH |
+| Security Groups | Reglas por referencia a SG, mínimo privilegio |
+| RDS | SSL en tránsito + cifrado en reposo |
+| CI/CD | OIDC — sin access keys hardcodeadas |
+| Estado Terraform | S3 cifrado + DynamoDB lock |
+
+---
+
+## Estructura del repositorio
 ```
-salon-belleza/
+3tier-enterprise-aws/
+├── terraform/
+│   ├── modules/
+│   │   ├── networking/
+│   │   ├── compute/
+│   │   └── database/
+│   └── environments/prod/
+├── app/
+│   └── backend/
 ├── database/
-│   └── schema.sql              # DDL: tablas, índices, triggers, seed
-├── backend/
-│   ├── server.js               # Entry point Express
-│   ├── .env.example            # Variables de entorno (copiar a .env)
-│   ├── config/database.js      # Sequelize + SSL para RDS
-│   ├── models/
-│   │   ├── Cliente.js
-│   │   ├── Servicio.js
-│   │   └── Turno.js            # Asociaciones FK + ENUM estado
-│   └── routes/
-│       ├── clientes.js         # CRUD + validación
-│       ├── servicios.js        # CRUD + filtro activos
-│       └── turnos.js           # CRUD + detección de conflicto de horario
-├── frontend/
-│   ├── vite.config.js
-│   ├── index.html
-│   ├── .env.example            # VITE_API_URL → IP privada del backend
-│   └── src/
-│       ├── main.jsx
-│       ├── App.jsx             # Router con 3 secciones
-│       ├── index.css           # Diseño dark luxury
-│       ├── services/api.js     # Axios centralizado
-│       └── pages/
-│           ├── Turnos.jsx      # Agenda + filtro + cambio de estado
-│           ├── Clientes.jsx    # Grid de tarjetas + búsqueda
-│           └── Servicios.jsx   # Grid + toggle activo/inactivo
-└── infra/
-    ├── deploy.sh               # Guía completa AWS CLI paso a paso
-    ├── nginx-frontend.conf     # Nginx para servir el build de Vite
-    └── salon-backend.service   # Systemd para Node.js
+│   └── schema.sql
+├── scripts/
+│   ├── user_data.sh
+│   └── validate_infra.sh
+└── .github/
+    └── workflows/
+        ├── infra.yml
+        └── app.yml
 ```
 
 ---
 
-## Inicio rápido (desarrollo local)
+## Stack tecnológico
 
-### Backend
-```bash
-cd backend
-cp .env.example .env
-# Editar .env con tus credenciales de PostgreSQL local
-npm install
-node server.js
-```
-
-### Frontend
-```bash
-cd frontend
-cp .env.example .env
-# VITE_API_URL=http://localhost:3001/api
-npm install
-npm run dev
-```
-
-### Base de datos local
-```bash
-psql -U postgres -c "CREATE DATABASE salon_db;"
-psql -U postgres -d salon_db -f database/schema.sql
-```
+| Componente | Tecnología |
+|------------|-----------|
+| Runtime | Node.js 20 LTS |
+| Framework | Express 4 |
+| ORM | Sequelize 6 + mysql2 |
+| Base de datos | RDS MySQL 8.0 |
+| Infraestructura | Terraform |
+| CI/CD | GitHub Actions |
+| Acceso EC2 | AWS Systems Manager (SSM) |
 
 ---
 
 ## API Reference
 
-| Método | Ruta                          | Descripción                          |
-|--------|-------------------------------|--------------------------------------|
-| GET    | /api/clientes                 | Listar todos los clientes            |
-| POST   | /api/clientes                 | Crear cliente                        |
-| PUT    | /api/clientes/:id             | Actualizar cliente                   |
-| DELETE | /api/clientes/:id             | Eliminar cliente (cascade turnos)    |
-| GET    | /api/servicios                | Listar servicios activos             |
-| POST   | /api/servicios                | Crear servicio                       |
-| PUT    | /api/servicios/:id            | Actualizar / desactivar servicio     |
-| GET    | /api/turnos?fecha=YYYY-MM-DD  | Listar turnos (opcional: por fecha)  |
-| POST   | /api/turnos                   | Crear turno (valida conflicto)       |
-| PATCH  | /api/turnos/:id/estado        | Cambiar estado del turno             |
-| DELETE | /api/turnos/:id               | Eliminar turno                       |
-| GET    | /health                       | Health check (para ALB)              |
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET | `/health` | Health check para ALB |
+| GET | `/api/clientes` | Listar clientes |
+| POST | `/api/clientes` | Crear cliente |
+| PUT | `/api/clientes/:id` | Actualizar cliente |
+| DELETE | `/api/clientes/:id` | Eliminar cliente |
+| GET | `/api/servicios` | Listar servicios activos |
+| POST | `/api/servicios` | Crear servicio |
+| PUT | `/api/servicios/:id` | Actualizar servicio |
+| GET | `/api/turnos` | Listar turnos |
+| POST | `/api/turnos` | Crear turno |
+| PATCH | `/api/turnos/:id/estado` | Cambiar estado |
+| DELETE | `/api/turnos/:id` | Eliminar turno |
 
 ---
 
-## Seguridad implementada
+## CI/CD
 
-- **Red**: RDS y backend sin IP pública. Solo el frontend/ALB tiene acceso a Internet.
-- **Security Groups**: Reglas por referencia a SG (no por IP), siguiendo mínimo privilegio.
-- **CORS**: El backend solo acepta peticiones del origen exacto del frontend.
-- **SSL en RDS**: Conexión cifrada en tránsito (`ssl: { require: true }`).
-- **Cifrado en reposo**: `--storage-encrypted` en el comando de creación RDS.
-- **Validación**: `express-validator` en todas las rutas antes de tocar la BD.
-- **Protección BD**: `--deletion-protection` en RDS para evitar borrado accidental.
+### infra.yml
+Se dispara en cada Pull Request con cambios en `terraform/**`
+```
+terraform fmt → tflint → tfsec → terraform validate
+```
+
+### app.yml
+Se dispara en cada push a main con cambios en `app/backend/**`
+```
+Auth OIDC → SSM Send Command → git pull + npm install + pm2 restart
+```
+
+---
+
+## Desarrollo local
+```bash
+cd app/backend
+cp .env.example .env
+# Completar .env con credenciales locales
+npm install
+npm run dev
+```
+
+---
+
+## Estado del proyecto
+
+- [x] Backend Node.js + MySQL migrado y validado
+- [x] Schema MySQL con tablas, índices y seed
+- [ ] Módulo Terraform networking
+- [ ] Módulo Terraform compute
+- [ ] Módulo Terraform database
+- [ ] Workflows GitHub Actions
+
+---
+
+## Autor
+
+**Carlos Sánchez** — [@carlossanchezcloud](https://github.com/carlossanchezcloud)
+'@
+$readme | Out-File -FilePath README.md -Encoding utf8
+
+git add README.md
+git commit -m "docs: clean README remove sensitive info"
+git push
