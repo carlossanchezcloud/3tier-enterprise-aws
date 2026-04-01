@@ -15,6 +15,18 @@ Infraestructura AWS de alta disponibilidad para un sistema de reservas de salón
 
 ![Arquitectura](docs/architecture/Arquitectura_web_3_niveles.png)
 
+![Internet](https://img.shields.io/badge/Internet-grey?style=flat-square)
+![→](https://img.shields.io/badge/→-grey?style=flat-square&labelColor=grey)
+![ALB Público](https://img.shields.io/badge/ALB_Público-blue?style=flat-square)
+![→](https://img.shields.io/badge/→-grey?style=flat-square&labelColor=grey)
+![ASG Website](https://img.shields.io/badge/ASG_Website-teal?style=flat-square)
+![→](https://img.shields.io/badge/→-grey?style=flat-square&labelColor=grey)
+![ALB Interno](https://img.shields.io/badge/ALB_Interno-blue?style=flat-square)
+![→](https://img.shields.io/badge/→-grey?style=flat-square&labelColor=grey)
+![ASG Backend](https://img.shields.io/badge/ASG_Backend-purple?style=flat-square)
+![→](https://img.shields.io/badge/→-grey?style=flat-square&labelColor=grey)
+![RDS MySQL](https://img.shields.io/badge/RDS_MySQL-orange?style=flat-square)
+
 **Flujo de tráfico:**
 Internet → ALB Público → ASG Website (Nginx + React) → ALB Interno → ASG Backend (Node.js) → RDS MySQL
 
