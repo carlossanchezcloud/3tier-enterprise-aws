@@ -167,7 +167,7 @@ npm run dev
 
 ### ADR-003 - User data con bootstrap completo
 
-**Contexto:** Las instancias deben ser completamente efímeras — sin estado, reemplazables en cualquier momento.
+**Contexto:** Las instancias deben ser completamente efímeras - sin estado, reemplazables en cualquier momento.
 
 **Decisión:** Todo el setup (instalar dependencias, clonar repo, build, arrancar servicios) se ejecuta en el user data al primer arranque.
 
@@ -181,9 +181,9 @@ npm run dev
 |---|---|
 | Disponibilidad objetivo | 99.9% (Multi-AZ en las 3 capas) |
 | Zonas de disponibilidad | 2 (us-east-1a + us-east-1b) |
-| Instancias website | 2 mínimo — 4 máximo (Auto Scaling) |
-| Instancias backend | 2 mínimo — 4 máximo (Auto Scaling) |
-| RDS MySQL | Single-AZ — sin replicación (costo optimizado) | ~$15 |
+| Instancias website | 2 mínimo - 4 máximo (Auto Scaling) |
+| Instancias backend | 2 mínimo - 4 máximo (Auto Scaling) |
+| RDS MySQL | Single-AZ - sin replicación (costo optimizado) | ~$15 |
 | Acceso a producción | 0 puertos de entrada abiertos en EC2 (solo SSM) |
 | Credenciales estáticas | 0 (OIDC + SSM + Secrets en variables de Terraform) |
 | Tiempo de recuperación ante fallo de instancia | ~3-5 minutos (ASG + ELB health check) |
