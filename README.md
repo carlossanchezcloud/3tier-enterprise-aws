@@ -1,5 +1,12 @@
 # 3tier-enterprise-aws
 
+![Infrastructure Deploy](https://img.shields.io/github/actions/workflow/status/carlossanchezcloud/3tier-enterprise-aws/infra.yml?label=Infrastructure+Deploy&logo=github)
+![App Deploy](https://img.shields.io/github/actions/workflow/status/carlossanchezcloud/3tier-enterprise-aws/app.yml?label=App+Deploy&logo=github)
+![Terraform](https://img.shields.io/badge/Terraform-1.6+-purple?logo=terraform)
+![AWS](https://img.shields.io/badge/AWS-3--Tier-orange?logo=amazonaws)
+![Costo](https://img.shields.io/badge/Costo-~%24107%2Fmes-yellow)
+![License](https://img.shields.io/badge/License-MIT-blue)
+
 Infraestructura AWS de alta disponibilidad para un sistema de reservas de salón de belleza. Arquitectura de 3 capas desplegada con Terraform, acceso seguro a instancias vía SSM Session Manager y CI/CD con GitHub Actions.
 
 ---
