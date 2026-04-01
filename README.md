@@ -33,11 +33,11 @@ Internet → ALB Público → ASG Website (Nginx + React) → ALB Interno → AS
 
 | Capa | Control |
 |---|---|
-| Red | EC2 y RDS sin IP pública — subnets privadas |
-| Acceso EC2 | SSM Session Manager — sin llaves SSH ni puerto 22 |
+| Red | EC2 y RDS sin IP pública - subnets privadas |
+| Acceso EC2 | SSM Session Manager - sin llaves SSH ni puerto 22 |
 | Security Groups | Reglas por referencia a SG, mínimo privilegio |
 | RDS | Cifrado en reposo + acceso solo desde sg_backend |
-| CI/CD | OIDC — sin access keys hardcodeadas |
+| CI/CD | OIDC - sin access keys hardcodeadas |
 | Estado Terraform | S3 cifrado + DynamoDB lock |
 | AMI | Siempre la última AL2023 vía SSM Parameter Store |
 
@@ -150,19 +150,27 @@ npm run dev
 
 ## 📐 Architecture Decision Records
 
-### ADR-001 — Dos ALBs en lugar de uno
+### ADR-001 - Dos ALBs en lugar de uno
 **Contexto:** La capa website necesita comunicarse con la capa backend de forma segura sin exponer el backend a internet.
+
 **Decisión:** ALB público para tráfico externo hacia website. ALB interno exclusivo para tráfico website → backend dentro de la VPC.
+
 **Consecuencia:** Mayor aislamiento de red. El backend nunca es alcanzable desde internet, solo desde instancias website autorizadas vía Security Group.
 
-### ADR-002 — Auto Scaling Groups con health check ELB
+### ADR-002 - Auto Scaling Groups con health check ELB
+
 **Contexto:** Las instancias deben reemplazarse automáticamente si la aplicación falla, no solo si el sistema operativo falla.
+
 **Decisión:** `health_check_type = "ELB"` en ambos ASGs. El ALB es el árbitro de salud, no EC2.
+
 **Consecuencia:** Si PM2 se cae o Nginx deja de responder, el ASG termina la instancia y lanza una nueva automáticamente.
 
-### ADR-003 — User data con bootstrap completo
+### ADR-003 - User data con bootstrap completo
+
 **Contexto:** Las instancias deben ser completamente efímeras — sin estado, reemplazables en cualquier momento.
+
 **Decisión:** Todo el setup (instalar dependencias, clonar repo, build, arrancar servicios) se ejecuta en el user data al primer arranque.
+
 **Consecuencia:** Cualquier instancia nueva del ASG llega lista para servir tráfico sin intervención manual.
 
 ---
@@ -175,7 +183,7 @@ npm run dev
 | Zonas de disponibilidad | 2 (us-east-1a + us-east-1b) |
 | Instancias website | 2 mínimo — 4 máximo (Auto Scaling) |
 | Instancias backend | 2 mínimo — 4 máximo (Auto Scaling) |
-| RDS | Primary + Failover con replicación sincrónica |
+| RDS MySQL | Single-AZ — sin replicación (costo optimizado) | ~$15 |
 | Acceso a producción | 0 puertos de entrada abiertos en EC2 (solo SSM) |
 | Credenciales estáticas | 0 (OIDC + SSM + Secrets en variables de Terraform) |
 | Tiempo de recuperación ante fallo de instancia | ~3-5 minutos (ASG + ELB health check) |
@@ -193,10 +201,11 @@ npm run dev
 | EC2 NAT Instance | t3.micro | 1 | ~$9.50 |
 | ALB Público | Application LB | 1 | ~$16 |
 | ALB Interno | Application LB | 1 | ~$16 |
-| RDS MySQL | db.t3.micro Multi-AZ | 1 | ~$48 |
+| RDS MySQL | db.t3.micro Multi-AZ | 1 | ~$15 (Single-AZ) |
 | EBS (30GB gp3 x 5) | gp3 | 5 vol | ~$12 |
-| S3 + DynamoDB (estado) | — | — | ~$1 |
-| **Total estimado** | | | **~$140/mes** |
+| ACM SSL | 1 certificado | ~$1 |
+| S3 + DynamoDB (estado) | — | — | Gratis|
+| **Total estimado** | | | **~$96-98/mes** |
 
 > 💡 Usando NAT Instance en vez de NAT Gateway se ahorran ~$32/mes. Para producción con alto tráfico se recomienda migrar a NAT Gateway por su mayor disponibilidad y ancho de banda.
 
