@@ -38,7 +38,7 @@ Internet → ALB Público → ASG Website (Nginx + React) → ALB Interno → AS
 | Security Groups | Reglas por referencia a SG, mínimo privilegio |
 | RDS | Cifrado en reposo + acceso solo desde sg_backend |
 | CI/CD | OIDC - sin access keys hardcodeadas |
-| Estado Terraform | S3 cifrado + DynamoDB lock |
+| Estado Terraform | S3 cifrado + versionado + S3 native locking |
 | AMI | Siempre la última AL2023 vía SSM Parameter Store |
 
 ---
@@ -204,7 +204,7 @@ npm run dev
 | RDS MySQL | db.t3.micro Multi-AZ | 1 | ~$15 (Single-AZ) |
 | EBS (30GB gp3 x 5) | gp3 | 5 vol | ~$12 |
 | ACM SSL | 1 certificado | ~$1 |
-| S3 + DynamoDB (estado) | — | — | Gratis|
+| S3 (estado) | — | — | Gratis|
 | **Total estimado** | | | **~$96-98/mes** |
 
 > 💡 Usando NAT Instance en vez de NAT Gateway se ahorran ~$32/mes. Para producción con alto tráfico se recomienda migrar a NAT Gateway por su mayor disponibilidad y ancho de banda.
