@@ -35,7 +35,11 @@ jobs:
           INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups \
             --auto-scaling-group-names "aws-3tier-website-asg" \
             --query "AutoScalingGroups[0].Instances[?LifecycleState=='InService'].InstanceId" \
-            --output text)
+            --output text | tr '\t\n' ' ' | xargs)
+          if [ -z "$INSTANCE_IDS" ] || [ "$INSTANCE_IDS" = "None" ]; then
+            echo "❌ No se encontraron instancias InService en aws-3tier-website-asg"
+            exit 1
+          fi
           echo "ids=$INSTANCE_IDS" >> "$GITHUB_OUTPUT"
           echo "Website instances: $INSTANCE_IDS"
 
@@ -86,7 +90,11 @@ jobs:
           INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups \
             --auto-scaling-group-names "aws-3tier-backend-asg" \
             --query "AutoScalingGroups[0].Instances[?LifecycleState=='InService'].InstanceId" \
-            --output text)
+            --output text | tr '\t\n' ' ' | xargs)
+          if [ -z "$INSTANCE_IDS" ] || [ "$INSTANCE_IDS" = "None" ]; then
+            echo "❌ No se encontraron instancias InService en aws-3tier-backend-asg"
+            exit 1
+          fi
           echo "ids=$INSTANCE_IDS" >> "$GITHUB_OUTPUT"
           echo "Backend instances: $INSTANCE_IDS"
 
