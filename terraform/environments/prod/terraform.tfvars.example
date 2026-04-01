@@ -6,7 +6,7 @@
 # ==============================================================================
 
 aws_region   = "us-east-1"
-project_name = "aws_3tier"
+project_name = "aws-3tier"
 
 # Red — 8 subredes: 2 pub + 2 website + 2 backend + 2 db
 vpc_cidr                = "10.0.0.0/16"

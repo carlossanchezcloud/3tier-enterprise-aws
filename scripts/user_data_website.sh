@@ -39,6 +39,12 @@ git clone ${repo_url} /app
 # 5. Build React/Vite
 # ------------------------------------------------------------------------------
 cd /app/app/frontend
+
+# Generar .env.production con la URL del ALB público
+cat > .env.production <<EOF
+VITE_API_URL=http://${cors_origin}/api
+EOF
+
 npm install
 npm run build
 

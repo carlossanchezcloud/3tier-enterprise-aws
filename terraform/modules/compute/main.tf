@@ -12,19 +12,11 @@
 # ------------------------------------------------------------------------------
 # AMI — Amazon Linux 2023 más reciente (us-east-1)
 # ------------------------------------------------------------------------------
-data "aws_ami" "amazon_linux_2023" {
-  most_recent = true
-  owners      = ["amazon"]
-
-  filter {
-    name   = "name"
-    values = ["al2023-ami-*-x86_64"]
-  }
-
-  filter {
-    name   = "state"
-    values = ["available"]
-  }
+# ------------------------------------------------------------------------------
+# AMI — Amazon Linux 2023 más reciente via SSM Parameter Store
+# ------------------------------------------------------------------------------
+data "aws_ssm_parameter" "amazon_linux_2023" {
+  name = "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64"
 }
 
 # ==============================================================================
@@ -172,7 +164,7 @@ resource "aws_lb_listener" "aws_3tier_internal_api" {
 resource "aws_launch_template" "aws_3tier_website_lt" {
   name_prefix   = "${var.project_name}-website-lt-"
   description   = "Launch template EC2 Website — Nginx + React/Vite build"
-  image_id      = data.aws_ami.amazon_linux_2023.id
+  image_id      = data.aws_ssm_parameter.amazon_linux_2023.value
   instance_type = "t3.micro"
 
   iam_instance_profile {
@@ -194,9 +186,10 @@ resource "aws_launch_template" "aws_3tier_website_lt" {
     }
   }
 
-  user_data = base64encode(templatefile("${path.module}/../../scripts/user_data_website.sh", {
+  user_data = base64encode(templatefile("${path.root}/../../../scripts/user_data_website.sh", {
     repo_url    = var.repo_url
     backend_alb = aws_lb.aws_3tier_internal_alb.dns_name
+    cors_origin = aws_lb.aws_3tier_public_alb.dns_name
   }))
 
   tag_specifications {
@@ -253,7 +246,7 @@ resource "aws_autoscaling_group" "aws_3tier_website_asg" {
 resource "aws_launch_template" "aws_3tier_backend_lt" {
   name_prefix   = "${var.project_name}-backend-lt-"
   description   = "Launch template EC2 Backend — Node.js API + PM2"
-  image_id      = data.aws_ami.amazon_linux_2023.id
+  image_id      = data.aws_ssm_parameter.amazon_linux_2023.value
   instance_type = "t3.micro"
 
   iam_instance_profile {
@@ -275,7 +268,7 @@ resource "aws_launch_template" "aws_3tier_backend_lt" {
     }
   }
 
-  user_data = base64encode(templatefile("${path.module}/../../scripts/user_data_backend.sh", {
+  user_data = base64encode(templatefile("${path.root}/../../../scripts/user_data_backend.sh", {
     repo_url    = var.repo_url
     db_host     = split(":", var.rds_endpoint)[0]
     db_port     = "3306"

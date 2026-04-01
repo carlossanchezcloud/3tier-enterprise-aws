@@ -377,7 +377,7 @@ resource "aws_route_table_association" "aws_3tier_db_az2" {
 # ------------------------------------------------------------------------------
 resource "aws_security_group" "aws_3tier_sg_alb_public" {
   name        = "${var.project_name}-sg-alb-public"
-  description = "ALB publico: acepta HTTP/HTTPS de Internet, reenvía a Website"
+  description = "ALB publico: acepta HTTP/HTTPS de Internet, reenvia a Website"
   vpc_id      = aws_vpc.aws_3tier_vpc.id
 
   ingress {
@@ -462,7 +462,7 @@ resource "aws_security_group_rule" "aws_3tier_website_egress_https_nat" {
 # ------------------------------------------------------------------------------
 resource "aws_security_group" "aws_3tier_sg_alb_internal" {
   name        = "${var.project_name}-sg-alb-internal"
-  description = "ALB interno: acepta de Website, reenvía a Backend en puerto 3001"
+  description = "ALB interno: acepta de Website, reenvia a Backend en puerto 3001"
   vpc_id      = aws_vpc.aws_3tier_vpc.id
 
   tags = merge(var.common_tags, {

@@ -147,4 +147,4 @@ $readme | Out-File -FilePath README.md -Encoding utf8
 
 git add README.md
 git commit -m "docs: clean README remove sensitive info"
-git push
+git pushe

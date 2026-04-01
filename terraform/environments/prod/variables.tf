@@ -9,9 +9,9 @@ variable "aws_region" {
 }
 
 variable "project_name" {
-  description = "Prefijo snake_case para todos los recursos"
+  description = "Prefijo para todos los recursos"
   type        = string
-  default     = "aws_3tier"
+  default     = "aws-3tier"
 }
 
 # ------------------------------------------------------------------------------

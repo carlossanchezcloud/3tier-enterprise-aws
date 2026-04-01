@@ -26,7 +26,7 @@ dnf update -y
 # 2. Node.js 20 via NodeSource + Git + cliente MySQL
 # ------------------------------------------------------------------------------
 curl -fsSL https://rpm.nodesource.com/setup_20.x | bash -
-dnf install -y nodejs git mysql
+dnf install -y nodejs git mariadb105
 
 node --version
 npm --version
