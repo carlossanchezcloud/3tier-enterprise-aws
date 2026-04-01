@@ -205,7 +205,7 @@ npm run dev
 | EBS (30GB gp3 x 5) | gp3 | 5 vol | ~$12 |
 | ACM SSL | 1 certificado | 1 | ~$1 |
 | S3 (estado) | S3 Standard | 1 | Gratis|
-| **Total estimado** | | | **~$96-98/mes** |
+| **Total estimado** | | | **~$107.50/mes** |
 
 > 💡 Usando NAT Instance en vez de NAT Gateway se ahorran ~$32/mes. Para producción con alto tráfico se recomienda migrar a NAT Gateway por su mayor disponibilidad y ancho de banda.
 
