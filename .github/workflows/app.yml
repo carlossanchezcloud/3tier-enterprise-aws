@@ -1,0 +1,127 @@
+name: Application Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'app/**'
+
+permissions:
+  id-token: write   # necesario para OIDC
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy App via SSM (sin SSH)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC — sin access keys)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/aws-3tier-github-actions-role
+          aws-region: us-east-1
+
+      # -------------------------------------------------------------------------
+      # Website — obtener instancias del ASG y desplegar via SSM
+      # -------------------------------------------------------------------------
+      - name: Get Website instance IDs from ASG
+        id: website_instances
+        run: |
+          INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups \
+            --auto-scaling-group-names "aws_3tier-website-asg" \
+            --query "AutoScalingGroups[0].Instances[?LifecycleState=='InService'].InstanceId" \
+            --output text)
+          echo "ids=$INSTANCE_IDS" >> "$GITHUB_OUTPUT"
+          echo "Website instances: $INSTANCE_IDS"
+
+      - name: Deploy frontend via SSM Send Command
+        id: ssm_website
+        run: |
+          COMMAND_ID=$(aws ssm send-command \
+            --instance-ids ${{ steps.website_instances.outputs.ids }} \
+            --document-name "AWS-RunShellScript" \
+            --parameters '{"commands":[
+              "cd /app && git pull origin main",
+              "cd /app/app/frontend && npm install",
+              "cd /app/app/frontend && npm run build",
+              "cp -r /app/app/frontend/dist/* /usr/share/nginx/html/",
+              "systemctl reload nginx"
+            ]}' \
+            --query "Command.CommandId" \
+            --output text)
+          echo "command_id=$COMMAND_ID" >> "$GITHUB_OUTPUT"
+          echo "SSM Command ID: $COMMAND_ID"
+
+      - name: Wait and verify Website SSM command
+        run: |
+          sleep 30
+          for INSTANCE in ${{ steps.website_instances.outputs.ids }}; do
+            STATUS=$(aws ssm get-command-invocation \
+              --command-id ${{ steps.ssm_website.outputs.command_id }} \
+              --instance-id "$INSTANCE" \
+              --query "Status" --output text)
+            echo "Website $INSTANCE: $STATUS"
+            if [ "$STATUS" != "Success" ]; then
+              echo "❌ SSM command failed on Website $INSTANCE (status: $STATUS)"
+              aws ssm get-command-invocation \
+                --command-id ${{ steps.ssm_website.outputs.command_id }} \
+                --instance-id "$INSTANCE" \
+                --query "StandardErrorContent" --output text
+              exit 1
+            fi
+          done
+          echo "✅ Website deploy completado"
+
+      # -------------------------------------------------------------------------
+      # Backend — obtener instancias del ASG y desplegar via SSM
+      # -------------------------------------------------------------------------
+      - name: Get Backend instance IDs from ASG
+        id: backend_instances
+        run: |
+          INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups \
+            --auto-scaling-group-names "aws_3tier-backend-asg" \
+            --query "AutoScalingGroups[0].Instances[?LifecycleState=='InService'].InstanceId" \
+            --output text)
+          echo "ids=$INSTANCE_IDS" >> "$GITHUB_OUTPUT"
+          echo "Backend instances: $INSTANCE_IDS"
+
+      - name: Deploy backend via SSM Send Command
+        id: ssm_backend
+        run: |
+          COMMAND_ID=$(aws ssm send-command \
+            --instance-ids ${{ steps.backend_instances.outputs.ids }} \
+            --document-name "AWS-RunShellScript" \
+            --parameters '{"commands":[
+              "cd /app && git pull origin main",
+              "cd /app/app/backend && npm install --production",
+              "pm2 restart backend"
+            ]}' \
+            --query "Command.CommandId" \
+            --output text)
+          echo "command_id=$COMMAND_ID" >> "$GITHUB_OUTPUT"
+          echo "SSM Command ID: $COMMAND_ID"
+
+      - name: Wait and verify Backend SSM command
+        run: |
+          sleep 30
+          for INSTANCE in ${{ steps.backend_instances.outputs.ids }}; do
+            STATUS=$(aws ssm get-command-invocation \
+              --command-id ${{ steps.ssm_backend.outputs.command_id }} \
+              --instance-id "$INSTANCE" \
+              --query "Status" --output text)
+            echo "Backend $INSTANCE: $STATUS"
+            if [ "$STATUS" != "Success" ]; then
+              echo "❌ SSM command failed on Backend $INSTANCE (status: $STATUS)"
+              aws ssm get-command-invocation \
+                --command-id ${{ steps.ssm_backend.outputs.command_id }} \
+                --instance-id "$INSTANCE" \
+                --query "StandardErrorContent" --output text
+              exit 1
+            fi
+          done
+          echo "✅ Backend deploy completado"

@@ -1,0 +1,59 @@
+name: Infrastructure CI
+
+on:
+  pull_request:
+    paths:
+      - 'terraform/**'
+
+permissions:
+  id-token: write   # necesario para OIDC
+  contents: read
+
+jobs:
+  validate:
+    name: Terraform Validate & Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC — sin access keys)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/aws-3tier-github-actions-role
+          aws-region: us-east-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~1.6"
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+
+      - name: Terraform fmt check
+        working-directory: terraform/environments/prod
+        run: terraform fmt -check -recursive
+
+      - name: TFLint
+        working-directory: terraform
+        run: |
+          tflint --init
+          tflint --recursive
+
+      - name: Install tfsec
+        run: |
+          curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
+
+      - name: tfsec security scan
+        working-directory: terraform
+        run: tfsec .
+
+      - name: Terraform init (sin backend)
+        working-directory: terraform/environments/prod
+        run: terraform init -backend=false
+
+      - name: Terraform validate
+        working-directory: terraform/environments/prod
+        run: terraform validate

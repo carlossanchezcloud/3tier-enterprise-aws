@@ -1,0 +1,28 @@
+# ==============================================================================
+# terraform/environments/prod/terraform.tfvars.example
+#
+# Copia este archivo a terraform.tfvars y rellena los valores reales.
+# terraform.tfvars esta en .gitignore — NUNCA commitear credenciales.
+# ==============================================================================
+
+aws_region   = "us-east-1"
+project_name = "aws_3tier"
+
+# Red — 8 subredes: 2 pub + 2 website + 2 backend + 2 db
+vpc_cidr                = "10.0.0.0/16"
+public_subnet_az1_cidr  = "10.0.1.0/24"
+public_subnet_az2_cidr  = "10.0.2.0/24"
+website_subnet_az1_cidr = "10.0.11.0/24"
+website_subnet_az2_cidr = "10.0.12.0/24"
+backend_subnet_az1_cidr = "10.0.21.0/24"
+backend_subnet_az2_cidr = "10.0.22.0/24"
+db_subnet_az1_cidr      = "10.0.31.0/24"
+db_subnet_az2_cidr      = "10.0.32.0/24"
+
+# Base de datos — SUSTITUIR por valores reales en terraform.tfvars
+db_name     = "salon_db"
+db_user     = "salon_admin"            # cambiar por usuario real
+db_password = "CAMBIAR_PASSWORD_AQUI"  # min 8 chars, mayus + minus + numero
+
+# Repositorio
+repo_url = "https://github.com/carlossanchezcloud/3tier-enterprise-aws.git"
