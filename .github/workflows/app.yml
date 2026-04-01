@@ -33,7 +33,7 @@ jobs:
         id: website_instances
         run: |
           INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups \
-            --auto-scaling-group-names "aws_3tier-website-asg" \
+            --auto-scaling-group-names "aws-3tier-website-asg" \
             --query "AutoScalingGroups[0].Instances[?LifecycleState=='InService'].InstanceId" \
             --output text)
           echo "ids=$INSTANCE_IDS" >> "$GITHUB_OUTPUT"
@@ -84,7 +84,7 @@ jobs:
         id: backend_instances
         run: |
           INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups \
-            --auto-scaling-group-names "aws_3tier-backend-asg" \
+            --auto-scaling-group-names "aws-3tier-backend-asg" \
             --query "AutoScalingGroups[0].Instances[?LifecycleState=='InService'].InstanceId" \
             --output text)
           echo "ids=$INSTANCE_IDS" >> "$GITHUB_OUTPUT"
