@@ -8,8 +8,8 @@ Infraestructura AWS de alta disponibilidad para un sistema de reservas de salón
 
 ![Arquitectura](docs/architecture/Arquitectura_web_3_niveles.png)
 
-
-
+**Flujo de tráfico:**
+Internet → ALB Público → ASG Website (Nginx + React) → ALB Interno → ASG Backend (Node.js) → RDS MySQL
 
 ---
 
