@@ -203,7 +203,7 @@ npm run dev
 | ALB Interno | Application LB | 1 | ~$16 |
 | RDS MySQL | db.t3.micro Multi-AZ | 1 | ~$15 (Single-AZ) |
 | EBS (30GB gp3 x 5) | gp3 | 5 vol | ~$12 |
-| ACM SSL | 1 certificado | ~$1 |
+| ACM SSL | 1 certificado | 1 | ~$1 |
 | S3 (estado) | S3 Standard | 1 | Gratis|
 | **Total estimado** | | | **~$96-98/mes** |
 
