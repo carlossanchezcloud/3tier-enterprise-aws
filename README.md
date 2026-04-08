@@ -22,6 +22,12 @@ Internet → ALB Público → ASG Website (Nginx + React) → ALB Interno → AS
 
 ---
 
+## 📸 Demo
+
+![App Salón Bella Vista](docs/screenshots/app.png)
+
+---
+
 ## Stack tecnológico
 
 | Componente | Tecnología |
