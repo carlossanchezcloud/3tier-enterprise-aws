@@ -101,18 +101,20 @@ Auth OIDC → SSM Send Command → git pull + npm install + pm2 restart
 
 ### Prerrequisitos
 
-- AWS CLI configurado
-- Terraform >= 1.5
-- Bucket S3 y tabla DynamoDB para el estado remoto
+- AWS CLI configurado con credenciales válidas
+- Terraform >= 1.10
+- Bucket S3 para el estado remoto (con versionado habilitado)
 
 ### Variables requeridas
 
 ```hcl
 repo_url    = "https://github.com/carlossanchezcloud/3tier-enterprise-aws.git"
-db_name     = "salon_db"
-db_user     = "root"
-db_password = "<password>"
+db_name     = ""
+db_user     = ""
+db_password = ""
 ```
+
+ ⚠️ Nunca commitear valores reales. Usar `terraform.tfvars` local (incluido en `.gitignore`) o variables de entorno `TF_VAR_*`.
 
 ### Aplicar infraestructura
 

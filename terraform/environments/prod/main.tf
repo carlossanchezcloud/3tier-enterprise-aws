@@ -4,7 +4,7 @@
 ################################################################################
 
 # ------------------------------------------------------------------------------
-# IAM OIDC Provider — autenticacion sin credenciales para GitHub Actions
+# IAM OIDC Provider - autenticacion sin credenciales para GitHub Actions
 # El token JWT de GitHub es validado directamente contra AWS STS
 # ------------------------------------------------------------------------------
 resource "aws_iam_openid_connect_provider" "github" {
